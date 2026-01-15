@@ -100,9 +100,18 @@ th {
 </table>
 </div>
 
-<audio autoplay loop>
-<source src="https://www.youtube.com/watch?v=u9oSVuf-0rc&list=RDu9oSVuf-0rc&start_radio=1.mp3" type="audio/mpeg">
-</audio>
+!-- 🔊 SES AÇ UYARISI -->
+<div id="soundHint">🔊 Sesi Açmak İçin Tıkla</div>
+
+<!-- 🎵 YOUTUBE GİZLİ PLAYER -->
+<iframe
+    id="ytplayer"
+    width="0"
+    height="0"
+    src="https://www.youtube.com/embed/u9oSVuf-0rc?autoplay=1&loop=1&playlist=u9oSVuf-0rc&mute=1"
+    frameborder="0"
+    allow="autoplay"
+></iframe>
 
 <script>
 const user = localStorage.getItem("currentUser");
