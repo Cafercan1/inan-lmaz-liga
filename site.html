@@ -3,200 +3,225 @@
 <head>
 <meta charset="UTF-8">
 <title>Elite Spectrum League</title>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+<style>
+body {
+    margin: 0;
+    padding: 30px;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    font-family: Arial;
+    color: white;
+}
+.top {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.table-container {
+    background: white;
+    color: #333;
+    padding: 20px;
+    border-radius: 12px;
+    max-width: 1200px;
+    margin: auto;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+th {
+    background: #667eea;
+    color: white;
+}
+.team { text-align: left; font-weight: bold; }
+.follow-team {
+    background: black !important;
+    font-weight: bold;
+    color: #fff !important;
+}
+.follow-team::after {
+    content: " ⭐ TAKİP EDİYORSUN";
+    font-size: 11px;
+    color: #ffd700;
+}
+.chat-container {
+    margin-top: 30px;
+    padding: 15px;
+    background: #1c2b4a;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.chat-box {
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #444;
+    padding: 10px;
+    background: #0b1e3a;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+.chat-message {
+    margin: 5px 0;
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: #2a3a5a;
+    color: #fff;
+}
+.chat-message.admin {
+    background: #f0a500;
+    color: #000;
+    font-weight: bold;
+}
+#chatInput {
+    width: 80%;
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+}
+button.send {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: none;
+    background: #f5c518;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+}
+button.send:hover { background: #ddb500; }
+</style>
+</head>
+<body>
 
-// 🔹 FIREBASE CONFIG
+<div class="top">
+    <h2 id="welcome"></h2>
+    <button onclick="logout()">Çıkış</button>
+</div>
+
+<div class="table-container">
+<h2 style="text-align:center;">Elite Spectrum League<br>Lig Puan Durumu</h2>
+
+<table id="puanTablosu">
+<thead>
+<tr>
+<th>#</th><th>Takım</th><th>OM</th><th>G</th><th>B</th><th>M</th>
+<th>AG</th><th>YG</th><th>AV</th><th>P</th><th>Son 5</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>1</td><td class="team">Marsilya</td><td>1</td><td>1</td><td>0</td><td>0</td><td>4</td><td>0</td><td>0</td><td>3</td><td></td></tr>
+<tr><td>2</td><td class="team">Juventus</td><td>1</td><td>1</td><td>0</td><td>0</td><td>5</td><td>2</td><td>0</td><td>3</td><td></td></tr>
+<tr><td>3</td><td class="team">Borussia Dortmund</td><td>1</td><td>1</td><td>0</td><td>0</td><td>5</td><td>3</td><td>0</td><td>3</td><td></td></tr>
+<tr><td>4</td><td class="team">İnter</td><td>1</td><td>0</td><td>1</td><td>0</td><td>4</td><td>4</td><td>0</td><td>1</td><td></td></tr>
+<tr><td>5</td><td class="team">Lyon</td><td>1</td><td>0</td><td>1</td><td>0</td><td>4</td><td>4</td><td>0</td><td>1</td><td></td></tr>
+<tr><td>6</td><td class="team">Liverpool</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>3</td><td>0</td><td>1</td><td></td></tr>
+<tr><td>7</td><td class="team">Atletico Madrid</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>3</td><td>0</td><td>1</td><td></td></tr>
+<tr><td>8</td><td class="team">Bayer Leverkusen</td><td>1</td><td>0</td><td>0</td><td>1</td><td>3</td><td>5</td><td>0</td><td>0</td><td></td></tr>
+<tr><td>9</td><td class="team">Sevilla</td><td>1</td><td>0</td><td>0</td><td>1</td><td>2</td><td>5</td><td>0</td><td>0</td><td></td></tr>
+<tr><td>10</td><td class="team">Arsenal</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>4</td><td>0</td><td>0</td><td></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="chat-container">
+    <h2>Lig Sohbeti</h2>
+    <div id="chatBox" class="chat-box"></div>
+    <input type="text" id="chatInput" placeholder="Mesajınızı yazın...">
+    <button id="sendBtn" class="send">Gönder</button>
+</div>
+
+<audio autoplay loop>
+<source src="sam.mp3" type="audio/mpeg">
+</audio>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
+
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCsgGry8f3TkjZF8ejJjawb8vO1yhpQH8s",
   authDomain: "lig-a-794ad.firebaseapp.com",
   projectId: "lig-a-794ad",
   storageBucket: "lig-a-794ad.appspot.com",
   messagingSenderId: "868678155723",
-  appId: "1:868678155723:web:cba4e929899704523aca4e",
-  measurementId: "G-HQW4EHNHBE"
+  appId: "1:868678155723:web:cba4e929899704523aca4e"
 };
+
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔹 Kullanıcıyı al
-const currentUser = localStorage.getItem("currentUser");
-if(!currentUser) window.location = "index.html"; // giriş yapılmamışsa
+// Kullanıcı
+const user = localStorage.getItem("currentUser");
+if (!user) location.href = "index.html";
+document.getElementById("welcome").innerText = "Hoş geldin, " + user;
 
-let userTeams = [];
+// Logout
+window.logout = ()=> { localStorage.removeItem("currentUser"); location.href="index.html"; };
 
-async function getUserTeams() {
-  const docRef = doc(db, "users", currentUser);
-  const docSnap = await getDoc(docRef);
-  if(docSnap.exists()){
-    userTeams.push(docSnap.data().team1);
-    if(docSnap.data().team2) userTeams.push(docSnap.data().team2);
-  }
-}
-
-// 🔹 Tablonun verilerini ve sıralamasını güncelle
+// Tablo
 function tabloyuGuncelleVeSirala() {
-  const tablo = document.querySelector("#puanTablosu tbody");
-  const satirlar = Array.from(tablo.rows);
+    const tbody = document.querySelector("#puanTablosu tbody");
+    const rows = Array.from(tbody.rows);
+    rows.forEach(r => r.cells[8].innerText = parseInt(r.cells[6].innerText)-parseInt(r.cells[7].innerText));
+    rows.sort((a,b)=> b.cells[9].innerText - a.cells[9].innerText);
+    rows.forEach((r,i)=>{ r.cells[0].innerText=i+1; tbody.appendChild(r); });
+}
+function secilenTakimlariVurgula() {
+    const users = JSON.parse(localStorage.getItem("users")||"[]");
+    const u = users.find(x=>x.username===user);
+    if(!u) return;
+    document.querySelectorAll("tbody tr").forEach(r=>{
+        const t = r.querySelector(".team").innerText;
+        if(u.teams.includes(t)) r.classList.add("follow-team");
+    });
+}
+window.onload = ()=>{ tabloyuGuncelleVeSirala(); secilenTakimlariVurgula(); };
 
-  satirlar.forEach(satir => {
-    const ag = parseInt(satir.cells[6].innerText); 
-    const yg = parseInt(satir.cells[7].innerText); 
-    satir.cells[8].innerText = ag - yg;
+// Chat
+const chatBox = document.getElementById("chatBox");
+const chatInput = document.getElementById("chatInput");
+const sendBtn = document.getElementById("sendBtn");
 
-    // 🔹 Kullanıcı takımlarını öne çıkar
-    if(userTeams.includes(satir.cells[1].innerText)){
-      satir.style.backgroundColor = "#fffa91"; // sarı vurgulu
-      satir.style.fontWeight = "bold";
-    }
-  });
-
-  satirlar.sort((a,b)=>{
-    const puanB = parseInt(b.cells[9].innerText);
-    const puanA = parseInt(a.cells[9].innerText);
-    const avB = parseInt(b.cells[8].innerText);
-    const avA = parseInt(a.cells[8].innerText);
-    const agB = parseInt(b.cells[6].innerText);
-    const agA = parseInt(a.cells[6].innerText);
-
-    if(puanB!==puanA) return puanB-puanA;
-    if(avB!==avA) return avB-avA;
-    return agB-agA;
-  });
-
-  satirlar.forEach((satir,index)=>{
-    satir.cells[0].innerText = index+1;
-    tablo.appendChild(satir);
-  });
+async function sendMessage() {
+    const text = chatInput.value.trim();
+    if(!text) return;
+    try {
+        await addDoc(collection(db,"chat"), { user, message:text, timestamp:serverTimestamp() });
+        chatInput.value="";
+    } catch(err){ console.error(err); }
 }
 
-// 🔹 Sayfa yüklendiğinde
-window.onload = async ()=>{
-  await getUserTeams();
-  tabloyuGuncelleVeSirala();
+sendBtn.addEventListener("click", sendMessage);
+chatInput.addEventListener("keypress", e=>{ if(e.key==="Enter") sendMessage(); });
 
-  // 🔹 Şarkıyı başlat
-  const audio = document.createElement("iframe");
-  audio.width = "0";
-  audio.height = "0";
-  audio.src = "https://www.youtube.com/embed/u9oSVuf-0rc?autoplay=1&loop=1&playlist=u9oSVuf-0rc";
-  audio.allow = "autoplay";
-  document.body.appendChild(audio);
-};
+const chatQuery = query(collection(db,"chat"), orderBy("timestamp","asc"));
+onSnapshot(chatQuery, snapshot=>{
+    chatBox.innerHTML="";
+    snapshot.forEach(docSnap=>{
+        const data = docSnap.data();
+        const div = document.createElement("div");
+        div.classList.add("chat-message");
+        if(data.user==="admin") div.classList.add("admin");
+        div.innerText = `${data.user}: ${data.message}`;
+        chatBox.appendChild(div);
+    });
+    chatBox.scrollTop = chatBox.scrollHeight;
+});
 </script>
 
-
-<style>
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 20px;
-    background: #0b1e3a; /* koyu lacivert arka plan */
-    color: #fff;
-}
-
-h2 {
-    margin-bottom: 15px;
-    text-align: center;
-    color: #f5c518; /* altın sarısı */
-    text-shadow: 1px 1px #000;
-}
-
-.table-container {
-    overflow-x: auto;
-    margin-top: 20px;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-}
-
-table {
-    border-collapse: collapse;
-    width: 100%;
-    background: #1c2b4a; /* koyu gri-mavi */
-    border-radius: 10px;
-}
-
-th, td {
-    padding: 12px;
-    text-align: center;
-    border-bottom: 1px solid #2a3a5a;
-    color: #fff;
-}
-
-th {
-    background: linear-gradient(90deg, #3b5998, #4c70ba);
-    font-size: 16px;
-}
-
-tr:hover:not(.user-team) {
-    background: rgba(255,255,255,0.08);
-}
-
-.team {
-    text-align: left;
-    padding-left: 15px;
-}
-
-.points {
-    font-weight: bold;
-    color: #f5c518;
-}
-
-.form span {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    margin: 2px;
-    border-radius: 50%;
-}
-
-.form .w { background: #28a745; } /* kazandı */
-.form .d { background: #6c757d; } /* beraber */
-.form .l { background: #dc3545; } /* kaybetti */
-
-/* Kullanıcı takımları için okunabilir highlight */
-tr.user-team {
-    background: red; /* altın / sarı */
-    color: #000000; /* siyah yazı */
-    font-weight: bold;
-}
-
-/* Form ve puan hücreleri de siyah yazı */
-tr.user-team td.points, tr.user-team td.form span {
-    color: #000000 !important;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    th, td {
-        padding: 8px;
-        font-size: 14px;
-    }
-}
-</style>
-
-
-<h2>Elite Spectrum League - Lig Puan Durumu</h2>
-<div class="table-container">
-<table id="puanTablosu">
-<thead>
-<tr>
-<th>#</th><th>Takım</th><th>OM</th><th>G</th><th>B</th><th>M</th><th>AG</th><th>YG</th><th>AV</th><th>P</th><th>Son 5</th>
-</tr>
-</thead>
-<tbody>
-<tr><td>1</td><td>Marsilya</td><td>1</td><td>1</td><td>0</td><td>0</td><td>4</td><td>0</td><td>4</td><td>3</td><td class="form"><span class="w"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
-<tr><td>2</td><td>Juventus</td><td>1</td><td>1</td><td>0</td><td>0</td><td>5</td><td>2</td><td>3</td><td>3</td><td class="form"><span class="w"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
-<tr><td>3</td><td>Borussia Dortmund</td><td>1</td><td>1</td><td>0</td><td>0</td><td>5</td><td>3</td><td>2</td><td>3</td><td class="form"><span class="w"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
-<tr><td>4</td><td>İnter</td><td>1</td><td>0</td><td>1</td><td>0</td><td>4</td><td>4</td><td>0</td><td>1</td><td class="form"><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
-<tr><td>5</td><td>Lyon</td><td>1</td><td>0</td><td>1</td><td>0</td><td>4</td><td>4</td><td>0</td><td>1</td><td class="form"><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
-<tr><td>6</td><td>Liverpool</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>3</td><td>0</td><td>1</td><td class="form"><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
-<tr><td>7</td><td>Atletico Madrid</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>3</td><td>0</td><td>1</td><td class="form"><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
-<tr><td>8</td><td>Bayer Leverkusen</td><td>1</td><td>0</td><td>0</td><td>1</td><td>3</td><td>5</td><td>-2</td><td>0</td><td class="form"><span class="l"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
-<tr><td>9</td><td>Sevilla</td><td>1</td><td>0</td><td>0</td><td>1</td><td>2</td><td>5</td><td>-3</td><td>0</td><td class="form"><span class="l"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
-<tr><td>10</td><td>Arsenal</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>4</td><td>-4</td><td>0</td><td class="form"><span class="l"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
-</tbody>
-</table>
-</div>
 </body>
 </html>
