@@ -3,21 +3,105 @@
 <head>
 <meta charset="UTF-8">
 <title>Elite Spectrum League</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<link rel="stylesheet" href="style.css">
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+// 🔹 FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyCsgGry8f3TkjZF8ejJjawb8vO1yhpQH8s",
+  authDomain: "lig-a-794ad.firebaseapp.com",
+  projectId: "lig-a-794ad",
+  storageBucket: "lig-a-794ad.appspot.com",
+  messagingSenderId: "868678155723",
+  appId: "1:868678155723:web:cba4e929899704523aca4e",
+  measurementId: "G-HQW4EHNHBE"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 🔹 Kullanıcıyı al
+const currentUser = localStorage.getItem("currentUser");
+if(!currentUser) window.location = "index.html"; // giriş yapılmamışsa
+
+let userTeams = [];
+
+async function getUserTeams() {
+  const docRef = doc(db, "users", currentUser);
+  const docSnap = await getDoc(docRef);
+  if(docSnap.exists()){
+    userTeams.push(docSnap.data().team1);
+    if(docSnap.data().team2) userTeams.push(docSnap.data().team2);
+  }
+}
+
+// 🔹 Tablonun verilerini ve sıralamasını güncelle
+function tabloyuGuncelleVeSirala() {
+  const tablo = document.querySelector("#puanTablosu tbody");
+  const satirlar = Array.from(tablo.rows);
+
+  satirlar.forEach(satir => {
+    const ag = parseInt(satir.cells[6].innerText); 
+    const yg = parseInt(satir.cells[7].innerText); 
+    satir.cells[8].innerText = ag - yg;
+
+    // 🔹 Kullanıcı takımlarını öne çıkar
+    if(userTeams.includes(satir.cells[1].innerText)){
+      satir.style.backgroundColor = "#fffa91"; // sarı vurgulu
+      satir.style.fontWeight = "bold";
+    }
+  });
+
+  satirlar.sort((a,b)=>{
+    const puanB = parseInt(b.cells[9].innerText);
+    const puanA = parseInt(a.cells[9].innerText);
+    const avB = parseInt(b.cells[8].innerText);
+    const avA = parseInt(a.cells[8].innerText);
+    const agB = parseInt(b.cells[6].innerText);
+    const agA = parseInt(a.cells[6].innerText);
+
+    if(puanB!==puanA) return puanB-puanA;
+    if(avB!==avA) return avB-avA;
+    return agB-agA;
+  });
+
+  satirlar.forEach((satir,index)=>{
+    satir.cells[0].innerText = index+1;
+    tablo.appendChild(satir);
+  });
+}
+
+// 🔹 Sayfa yüklendiğinde
+window.onload = async ()=>{
+  await getUserTeams();
+  tabloyuGuncelleVeSirala();
+
+  // 🔹 Şarkıyı başlat
+  const audio = document.createElement("iframe");
+  audio.width = "0";
+  audio.height = "0";
+  audio.src = "https://www.youtube.com/embed/u9oSVuf-0rc?autoplay=1&loop=1&playlist=u9oSVuf-0rc";
+  audio.allow = "autoplay";
+  document.body.appendChild(audio);
+};
+</script>
+
 <style>
-body{font-family:Arial;padding:20px;background:#f0f0f0}
-.table-container{width:90%;margin:auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 0 15px rgba(0,0,0,0.2);}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ccc;padding:8px;text-align:center}
-.highlight{background:yellow;font-weight:bold;color:red;}
+body{font-family:Arial;margin:20px;background:#f2f2f2;color:#333}
+h2{margin-bottom:10px;text-align:center}
+.table-container{overflow-x:auto;margin-top:20px}
+table{border-collapse:collapse;width:100%;background:#fff}
+table th, table td{border:1px solid #ddd;padding:8px;text-align:center}
+table th{background:#333;color:#fff}
+.team{text-align:left;padding-left:10px}
+.points{font-weight:bold}
+.form span{display:inline-block;width:10px;height:10px;margin:1px;border-radius:50%}
+.form .w{background:green}
+.form .d{background:gray}
+.form .l{background:red}
 </style>
-</head>
-<body>
 
-<h2 class="Elite">Elite Spectrum League - Lig Puan Durumu</h2>
-
+<h2>Elite Spectrum League - Lig Puan Durumu</h2>
 <div class="table-container">
 <table id="puanTablosu">
 <thead>
@@ -26,51 +110,18 @@ th,td{border:1px solid #ccc;padding:8px;text-align:center}
 </tr>
 </thead>
 <tbody>
-<tr><td>1</td><td>Marsilya</td><td>1</td><td>1</td><td>0</td><td>0</td><td>4</td><td>0</td><td>4</td><td>3</td><td>WWDDD</td></tr>
-<tr><td>2</td><td>Juventus</td><td>1</td><td>1</td><td>0</td><td>0</td><td>5</td><td>2</td><td>3</td><td>3</td><td>WWDDD</td></tr>
-<tr><td>3</td><td>Borussia Dortmund</td><td>1</td><td>1</td><td>0</td><td>0</td><td>5</td><td>3</td><td>2</td><td>3</td><td>WWDDD</td></tr>
-<tr><td>4</td><td>İnter</td><td>1</td><td>0</td><td>1</td><td>0</td><td>4</td><td>4</td><td>0</td><td>1</td><td>DDDDD</td></tr>
-<tr><td>5</td><td>Lyon</td><td>1</td><td>0</td><td>1</td><td>0</td><td>4</td><td>4</td><td>0</td><td>1</td><td>DDDDD</td></tr>
-<tr><td>6</td><td>Liverpool</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>3</td><td>0</td><td>1</td><td>DDDDD</td></tr>
-<tr><td>7</td><td>Atletico Madrid</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>3</td><td>0</td><td>1</td><td>DDDDD</td></tr>
-<tr><td>8</td><td>Bayer Leverkusen</td><td>1</td><td>0</td><td>0</td><td>1</td><td>3</td><td>5</td><td>-2</td><td>0</td><td>LDDDD</td></tr>
-<tr><td>9</td><td>Sevilla</td><td>1</td><td>0</td><td>0</td><td>1</td><td>2</td><td>5</td><td>-3</td><td>0</td><td>LDDDD</td></tr>
-<tr><td>10</td><td>Arsenal</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>4</td><td>-4</td><td>0</td><td>LDDDD</td></tr>
+<tr><td>1</td><td>Marsilya</td><td>1</td><td>1</td><td>0</td><td>0</td><td>4</td><td>0</td><td>4</td><td>3</td><td class="form"><span class="w"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
+<tr><td>2</td><td>Juventus</td><td>1</td><td>1</td><td>0</td><td>0</td><td>5</td><td>2</td><td>3</td><td>3</td><td class="form"><span class="w"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
+<tr><td>3</td><td>Borussia Dortmund</td><td>1</td><td>1</td><td>0</td><td>0</td><td>5</td><td>3</td><td>2</td><td>3</td><td class="form"><span class="w"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
+<tr><td>4</td><td>İnter</td><td>1</td><td>0</td><td>1</td><td>0</td><td>4</td><td>4</td><td>0</td><td>1</td><td class="form"><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
+<tr><td>5</td><td>Lyon</td><td>1</td><td>0</td><td>1</td><td>0</td><td>4</td><td>4</td><td>0</td><td>1</td><td class="form"><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
+<tr><td>6</td><td>Liverpool</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>3</td><td>0</td><td>1</td><td class="form"><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
+<tr><td>7</td><td>Atletico Madrid</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>3</td><td>0</td><td>1</td><td class="form"><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
+<tr><td>8</td><td>Bayer Leverkusen</td><td>1</td><td>0</td><td>0</td><td>1</td><td>3</td><td>5</td><td>-2</td><td>0</td><td class="form"><span class="l"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
+<tr><td>9</td><td>Sevilla</td><td>1</td><td>0</td><td>0</td><td>1</td><td>2</td><td>5</td><td>-3</td><td>0</td><td class="form"><span class="l"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
+<tr><td>10</td><td>Arsenal</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>4</td><td>-4</td><td>0</td><td class="form"><span class="l"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span></td></tr>
 </tbody>
 </table>
 </div>
-
-<audio id="music" autoplay loop>
-<source src="https://www.youtube.com/watch?v=u9oSVuf-0rc&list=RDu9oSVuf-0rc&start_radio=1" type="audio/mp3">
-</audio>
-
-<script>
-const firebaseConfig = {
-  apiKey: "XXXX",
-  authDomain: "XXXX",
-  projectId: "XXXX",
-  storageBucket: "XXXX",
-  messagingSenderId: "XXXX",
-  appId: "XXXX"
-};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
-
-// Kullanıcının seçtiği takımlar
-const currentUser = localStorage.getItem("currentUser");
-if(currentUser){
-  db.collection("users").doc(currentUser).get().then(d=>{
-    if(d.exists){
-      const t1=d.data().team1;
-      const t2=d.data().team2;
-      document.querySelectorAll("#puanTablosu tbody tr td:nth-child(2)").forEach(td=>{
-        if(td.innerText===t1 || td.innerText===t2){
-          td.parentElement.classList.add("highlight");
-        }
-      });
-    }
-  });
-}
-</script>
 </body>
 </html>
