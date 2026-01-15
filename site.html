@@ -86,20 +86,92 @@ window.onload = async ()=>{
 };
 </script>
 
+
 <style>
-body{font-family:Arial;margin:20px;background:#f2f2f2;color:#333}
-h2{margin-bottom:10px;text-align:center}
-.table-container{overflow-x:auto;margin-top:20px}
-table{border-collapse:collapse;width:100%;background:#fff}
-table th, table td{border:1px solid #ddd;padding:8px;text-align:center}
-table th{background:#333;color:#fff}
-.team{text-align:left;padding-left:10px}
-.points{font-weight:bold}
-.form span{display:inline-block;width:10px;height:10px;margin:1px;border-radius:50%}
-.form .w{background:green}
-.form .d{background:gray}
-.form .l{background:red}
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 20px;
+    background: #0a0a0a;
+    color: #fff;
+}
+
+h2 {
+    margin-bottom: 10px;
+    text-align: center;
+    color: #f5c518;
+    text-shadow: 2px 2px #000;
+}
+
+.table-container {
+    overflow-x: auto;
+    margin-top: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    background: #1a1a1a;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #444;
+}
+
+th {
+    background: linear-gradient(90deg, #1e3c72, #2a5298);
+    color: #fff;
+    font-size: 16px;
+}
+
+tr:hover:not(.user-team) {
+    background: rgba(255,255,255,0.05);
+}
+
+.team {
+    text-align: left;
+    padding-left: 15px;
+}
+
+.points {
+    font-weight: bold;
+    color: #f5c518;
+}
+
+.form span {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin: 2px;
+    border-radius: 50%;
+}
+
+.form .w { background: #28a745; } /* kazandı - yeşil */
+.form .d { background: #6c757d; } /* beraber - gri */
+.form .l { background: #dc3545; } /* kaybetti - kırmızı */
+
+/* Kullanıcı takımlarını vurgulama */
+tr.user-team {
+    background: #ffc107 !important;
+    color: #000 !important;
+    font-weight: bold;
+    box-shadow: inset 0 0 10px #fff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    th, td {
+        padding: 8px;
+        font-size: 14px;
+    }
+}
 </style>
+
 
 <h2>Elite Spectrum League - Lig Puan Durumu</h2>
 <div class="table-container">
