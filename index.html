@@ -2,142 +2,99 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Kayıt & Giriş</title>
-
+<title>Kayıt / Giriş</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
-body {
-    margin: 0;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.container {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    width: 400px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-}
-
-h1 { text-align: center; }
-
-input {
-    width: 100%;
-    padding: 8px;
-    margin: 6px 0;
-}
-
-button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-button:hover { opacity: 0.9; }
-
-.message { text-align: center; margin-top: 10px; }
-
-#teams label {
-    font-size: 14px;
-}
+body{font-family:Arial;padding:40px}
+input,button{display:block;margin:10px 0;padding:8px;width:250px}
 </style>
 </head>
-
 <body>
 
-<div class="container">
-    <h1>Kayıt Ol</h1>
+<h2>Kayıt Ol</h2>
+<input id="regUser" placeholder="Kullanıcı adı">
+<input id="regPass" type="password" placeholder="Şifre">
+<select id="regTeam1">
+  <option value="">Takım 1 Seç</option>
+  <option value="Marsilya">Marsilya</option>
+  <option value="Juventus">Juventus</option>
+  <option value="Borussia Dortmund">Borussia Dortmund</option>
+  <option value="İnter">İnter</option>
+  <option value="Lyon">Lyon</option>
+  <option value="Liverpool">Liverpool</option>
+  <option value="Atletico Madrid">Atletico Madrid</option>
+  <option value="Bayer Leverkusen">Bayer Leverkusen</option>
+  <option value="Sevilla">Sevilla</option>
+  <option value="Arsenal">Arsenal</option>
+</select>
+<select id="regTeam2">
+  <option value="">Takım 2 Seç (Opsiyonel)</option>
+  <option value="Marsilya">Marsilya</option>
+  <option value="Juventus">Juventus</option>
+  <option value="Borussia Dortmund">Borussia Dortmund</option>
+  <option value="İnter">İnter</option>
+  <option value="Lyon">Lyon</option>
+  <option value="Liverpool">Liverpool</option>
+  <option value="Atletico Madrid">Atletico Madrid</option>
+  <option value="Bayer Leverkusen">Bayer Leverkusen</option>
+  <option value="Sevilla">Sevilla</option>
+  <option value="Arsenal">Arsenal</option>
+</select>
+<button onclick="register()">Kayıt Ol</button>
 
-    <input id="regUsername" placeholder="Kullanıcı Adı">
-    <input id="regPassword" type="password" placeholder="Şifre">
+<h2>Giriş Yap</h2>
+<input id="logUser" placeholder="Kullanıcı adı">
+<input id="logPass" type="password" placeholder="Şifre">
+<button onclick="login()">Giriş</button>
 
-    <p style="font-size:13px;">
-        ⚠️ En fazla <b>2 takım</b> seçebilirsiniz.<br>
-        Kendi takım(lar)ınızı seçmeniz takip açısından önerilir.<br>
-        Başka takımları da seçebilirsiniz, sorumluluk kullanıcıya aittir.
-    </p>
-
-    <div id="teams">
-        <label><input type="checkbox" value="Marsilya"> Marsilya</label><br>
-        <label><input type="checkbox" value="Juventus"> Juventus</label><br>
-        <label><input type="checkbox" value="Borussia Dortmund"> Borussia Dortmund</label><br>
-        <label><input type="checkbox" value="İnter"> İnter</label><br>
-        <label><input type="checkbox" value="Lyon"> Lyon</label><br>
-        <label><input type="checkbox" value="Liverpool"> Liverpool</label><br>
-        <label><input type="checkbox" value="Atletico Madrid"> Atletico Madrid</label><br>
-        <label><input type="checkbox" value="Bayer Leverkusen"> Bayer Leverkusen</label><br>
-        <label><input type="checkbox" value="Sevilla"> Sevilla</label><br>
-        <label><input type="checkbox" value="Arsenal"> Arsenal</label>
-    </div>
-
-    <button onclick="register()">Kayıt Ol</button>
-    <div id="regMessage" class="message"></div>
-
-    <hr>
-
-    <h1>Giriş Yap</h1>
-    <input id="logUsername" placeholder="Kullanıcı Adı">
-    <input id="logPassword" type="password" placeholder="Şifre">
-    <button onclick="login()">Giriş Yap</button>
-    <div id="logMessage" class="message"></div>
-</div>
+<p id="msg"></p>
 
 <script>
-function register() {
-    const username = regUsername.value.trim();
-    const password = regPassword.value.trim();
-    const msg = regMessage;
+// 🔥 FIREBASE CONFIG (Kendi config'in ile değiştir)
+const firebaseConfig = {
+  apiKey: "XXXX",
+  authDomain: "XXXX",
+  projectId: "XXXX",
+  storageBucket: "XXXX",
+  messagingSenderId: "XXXX",
+  appId: "XXXX"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-    const teams = Array.from(
-        document.querySelectorAll("#teams input:checked")
-    ).map(cb => cb.value);
+function register(){
+  const u=document.getElementById("regUser").value.trim();
+  const p=document.getElementById("regPass").value.trim();
+  const t1=document.getElementById("regTeam1").value;
+  const t2=document.getElementById("regTeam2").value;
 
-    if (!username || !password) {
-        msg.innerText = "Boş alan bırakmayın ❌";
-        return;
-    }
+  if(!u||!p||!t1){ msg.innerText="Kullanıcı adı, şifre ve en az 1 takım gerekli!"; return;}
 
-    if (teams.length === 0 || teams.length > 2) {
-        msg.innerText = "En fazla 2 takım seçmelisiniz ❌";
-        return;
-    }
+  if(t1===t2 && t2!==""){ msg.innerText="Aynı takımı iki kez seçemezsin"; return;}
 
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    if (users.find(u => u.username === username)) {
-        msg.innerText = "Kullanıcı zaten var ❌";
-        return;
-    }
-
-    users.push({ username, password, teams });
-    localStorage.setItem("users", JSON.stringify(users));
-    msg.innerText = "Kayıt başarılı ✅";
+  db.collection("users").doc(u).get().then(d=>{
+    if(d.exists){ msg.innerText="Kullanıcı zaten var!"; return; }
+    db.collection("users").doc(u).set({
+      username:u,
+      password:p,
+      team1:t1,
+      team2:t2,
+      created:new Date()
+    });
+    msg.innerText="Kayıt başarılı ✅";
+  });
 }
 
-function login() {
-    const username = logUsername.value.trim();
-    const password = logPassword.value.trim();
-    const msg = logMessage;
-
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = users.find(u => u.username === username && u.password === password);
-
-    if (user) {
-        localStorage.setItem("currentUser", username);
-        window.location.href = "site.html";
-    } else {
-        msg.innerText = "Hatalı giriş ❌";
-    }
+function login(){
+  const u=document.getElementById("logUser").value.trim();
+  const p=document.getElementById("logPass").value.trim();
+  db.collection("users").doc(u).get().then(d=>{
+    if(!d.exists||d.data().password!==p){ msg.innerText="Hatalı giriş ❌"; return; }
+    localStorage.setItem("currentUser",u);
+    window.location="site.html";
+  });
 }
 </script>
-
 </body>
 </html>
