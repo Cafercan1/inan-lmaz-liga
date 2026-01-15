@@ -3,11 +3,68 @@
 <head>
 <meta charset="UTF-8">
 <title>Kayıt / Giriş</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script type="module">
+  // 🔹 MODÜLER FIREBASE
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCsgGry8f3TkjZF8ejJjawb8vO1yhpQH8s",
+    authDomain: "lig-a-794ad.firebaseapp.com",
+    projectId: "lig-a-794ad",
+    storageBucket: "lig-a-794ad.appspot.com",
+    messagingSenderId: "868678155723",
+    appId: "1:868678155723:web:cba4e929899704523aca4e",
+    measurementId: "G-HQW4EHNHBE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.registerUser = async () => {
+    const u = document.getElementById("regUser").value.trim();
+    const p = document.getElementById("regPass").value.trim();
+    const t1 = document.getElementById("regTeam1").value;
+    const t2 = document.getElementById("regTeam2").value;
+    const msg = document.getElementById("msg");
+
+    if(!u || !p || !t1){ msg.innerText="Kullanıcı adı, şifre ve en az 1 takım gerekli!"; return;}
+    if(t1===t2 && t2!==""){ msg.innerText="Aynı takımı iki kez seçemezsin"; return;}
+
+    const docRef = doc(db, "users", u);
+    const docSnap = await getDoc(docRef);
+    if(docSnap.exists()){ msg.innerText="Kullanıcı zaten var!"; return; }
+
+    await setDoc(docRef, {
+      username:u,
+      password:p,
+      team1:t1,
+      team2:t2,
+      created:new Date()
+    });
+
+    msg.innerText = "Kayıt başarılı ✅";
+  };
+
+  window.loginUser = async () => {
+    const u = document.getElementById("logUser").value.trim();
+    const p = document.getElementById("logPass").value.trim();
+    const msg = document.getElementById("msg");
+
+    const docRef = doc(db, "users", u);
+    const docSnap = await getDoc(docRef);
+
+    if(!docSnap.exists() || docSnap.data().password !== p){
+      msg.innerText="Hatalı giriş ❌"; return;
+    }
+
+    localStorage.setItem("currentUser", u);
+    window.location = "site.html";
+  };
+</script>
 <style>
 body{font-family:Arial;padding:40px}
-input,button{display:block;margin:10px 0;padding:8px;width:250px}
+input,button,select{display:block;margin:10px 0;padding:8px;width:250px}
 </style>
 </head>
 <body>
@@ -41,60 +98,14 @@ input,button{display:block;margin:10px 0;padding:8px;width:250px}
   <option value="Sevilla">Sevilla</option>
   <option value="Arsenal">Arsenal</option>
 </select>
-<button onclick="register()">Kayıt Ol</button>
+<button onclick="registerUser()">Kayıt Ol</button>
 
 <h2>Giriş Yap</h2>
 <input id="logUser" placeholder="Kullanıcı adı">
 <input id="logPass" type="password" placeholder="Şifre">
-<button onclick="login()">Giriş</button>
+<button onclick="loginUser()">Giriş</button>
 
 <p id="msg"></p>
 
-<script>
-// 🔥 FIREBASE CONFIG (Kendi config'in ile değiştir)
-const firebaseConfig = {
-  apiKey: "XXXX",
-  authDomain: "XXXX",
-  projectId: "XXXX",
-  storageBucket: "XXXX",
-  messagingSenderId: "XXXX",
-  appId: "XXXX"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-function register(){
-  const u=document.getElementById("regUser").value.trim();
-  const p=document.getElementById("regPass").value.trim();
-  const t1=document.getElementById("regTeam1").value;
-  const t2=document.getElementById("regTeam2").value;
-
-  if(!u||!p||!t1){ msg.innerText="Kullanıcı adı, şifre ve en az 1 takım gerekli!"; return;}
-
-  if(t1===t2 && t2!==""){ msg.innerText="Aynı takımı iki kez seçemezsin"; return;}
-
-  db.collection("users").doc(u).get().then(d=>{
-    if(d.exists){ msg.innerText="Kullanıcı zaten var!"; return; }
-    db.collection("users").doc(u).set({
-      username:u,
-      password:p,
-      team1:t1,
-      team2:t2,
-      created:new Date()
-    });
-    msg.innerText="Kayıt başarılı ✅";
-  });
-}
-
-function login(){
-  const u=document.getElementById("logUser").value.trim();
-  const p=document.getElementById("logPass").value.trim();
-  db.collection("users").doc(u).get().then(d=>{
-    if(!d.exists||d.data().password!==p){ msg.innerText="Hatalı giriş ❌"; return; }
-    localStorage.setItem("currentUser",u);
-    window.location="site.html";
-  });
-}
-</script>
 </body>
 </html>
