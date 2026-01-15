@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <title>Elite Spectrum League</title>
-
 <style>
 body {
     margin: 0;
     padding: 30px;
     background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    font-family: Arial;
+    font-family: Arial, sans-serif;
     color: white;
 }
 
 .top {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
 }
 
@@ -53,7 +53,10 @@ th {
     color: white;
 }
 
-.team { text-align: left; font-weight: bold; }
+.team {
+    text-align: left;
+    font-weight: bold;
+}
 
 .follow-team {
     background: linear-gradient(90deg, #ffe259, #ffa751) !important;
@@ -64,9 +67,9 @@ th {
     content: " ⭐ TAKİP EDİYORSUN";
     font-size: 11px;
 }
+
 </style>
 </head>
-
 <body>
 
 <div class="top">
@@ -84,7 +87,6 @@ th {
 <th>AG</th><th>YG</th><th>AV</th><th>P</th><th>Son 5</th>
 </tr>
 </thead>
-
 <tbody>
 <tr><td>1</td><td class="team">Marsilya</td><td>1</td><td>1</td><td>0</td><td>0</td><td>4</td><td>0</td><td>0</td><td>3</td><td></td></tr>
 <tr><td>2</td><td class="team">Juventus</td><td>1</td><td>1</td><td>0</td><td>0</td><td>5</td><td>2</td><td>0</td><td>3</td><td></td></tr>
@@ -100,42 +102,47 @@ th {
 </table>
 </div>
 
-!-- 🔊 SES AÇ UYARISI -->
-<div id="soundHint">🔊 Sesi Açmak İçin Tıkla</div>
-
-<!-- 🎵 YOUTUBE GİZLİ PLAYER -->
+<!-- 🎵 YouTube Müzik -->
 <iframe
     id="ytplayer"
     width="0"
     height="0"
-    src="https://www.youtube.com/embed/u9oSVuf-0rc?autoplay=1&loop=1&playlist=u9oSVuf-0rc&mute=1"
+    src="https://www.youtube.com/embed/u9oSVuf-0rc?autoplay=1&loop=1&playlist=u9oSVuf-0rc&mute=0"
     frameborder="0"
     allow="autoplay"
 ></iframe>
 
 <script>
+// Kullanıcı kontrol
 const user = localStorage.getItem("currentUser");
 if (!user) location.href = "index.html";
 welcome.innerText = "Hoş geldin, " + user;
 
+// Çıkış
 function logout() {
     localStorage.removeItem("currentUser");
     location.href = "index.html";
 }
 
+// Tablo sıralama ve AV hesap
 function tabloyuGuncelleVeSirala() {
     const tbody = document.querySelector("#puanTablosu tbody");
     const rows = Array.from(tbody.rows);
 
-    rows.forEach(r => {
-        r.cells[8].innerText =
-            parseInt(r.cells[6].innerText) - parseInt(r.cells[7].innerText);
+    rows.forEach(r=>{
+        r.cells[8].innerText = parseInt(r.cells[6].innerText)-parseInt(r.cells[7].innerText);
     });
 
-    rows.sort((a,b)=> b.cells[9].innerText - a.cells[9].innerText);
+    rows.sort((a,b)=>{
+        const pA=parseInt(a.cells[9].innerText),pB=parseInt(b.cells[9].innerText);
+        const avA=parseInt(a.cells[8].innerText), avB=parseInt(b.cells[8].innerText);
+        return pB!==pA ? pB-pA : avB-avA;
+    });
+
     rows.forEach((r,i)=>{ r.cells[0].innerText=i+1; tbody.appendChild(r); });
 }
 
+// Kullanıcının seçtiği takımlar
 function secilenTakimlariVurgula() {
     const users = JSON.parse(localStorage.getItem("users") || "[]");
     const u = users.find(x => x.username === user);
@@ -155,6 +162,5 @@ window.onload = ()=>{
     secilenTakimlariVurgula();
 };
 </script>
-
 </body>
 </html>
