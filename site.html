@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Elite Spectrum League</title>
+
+<style>
+body {
+    margin: 0;
+    padding: 30px;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    font-family: Arial;
+    color: white;
+}
+
+.top {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background: crimson;
+    color: white;
+    cursor: pointer;
+}
+
+.table-container {
+    background: white;
+    color: #333;
+    padding: 20px;
+    border-radius: 12px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background: #667eea;
+    color: white;
+}
+
+.team { text-align: left; font-weight: bold; }
+
+.follow-team {
+    background: linear-gradient(90deg, #ffe259, #ffa751) !important;
+    font-weight: bold;
+}
+
+.follow-team::after {
+    content: " ⭐ TAKİP EDİYORSUN";
+    font-size: 11px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="top">
+    <h2 id="welcome"></h2>
+    <button onclick="logout()">Çıkış</button>
+</div>
+
+<div class="table-container">
+<h2 style="text-align:center;">Elite Spectrum League<br>Lig Puan Durumu</h2>
+
+<table id="puanTablosu">
+<thead>
+<tr>
+<th>#</th><th>Takım</th><th>OM</th><th>G</th><th>B</th><th>M</th>
+<th>AG</th><th>YG</th><th>AV</th><th>P</th><th>Son 5</th>
+</tr>
+</thead>
+
+<tbody>
+<tr><td>1</td><td class="team">Marsilya</td><td>1</td><td>1</td><td>0</td><td>0</td><td>4</td><td>0</td><td>0</td><td>3</td><td></td></tr>
+<tr><td>2</td><td class="team">Juventus</td><td>1</td><td>1</td><td>0</td><td>0</td><td>5</td><td>2</td><td>0</td><td>3</td><td></td></tr>
+<tr><td>3</td><td class="team">Borussia Dortmund</td><td>1</td><td>1</td><td>0</td><td>0</td><td>5</td><td>3</td><td>0</td><td>3</td><td></td></tr>
+<tr><td>4</td><td class="team">İnter</td><td>1</td><td>0</td><td>1</td><td>0</td><td>4</td><td>4</td><td>0</td><td>1</td><td></td></tr>
+<tr><td>5</td><td class="team">Lyon</td><td>1</td><td>0</td><td>1</td><td>0</td><td>4</td><td>4</td><td>0</td><td>1</td><td></td></tr>
+<tr><td>6</td><td class="team">Liverpool</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>3</td><td>0</td><td>1</td><td></td></tr>
+<tr><td>7</td><td class="team">Atletico Madrid</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>3</td><td>0</td><td>1</td><td></td></tr>
+<tr><td>8</td><td class="team">Bayer Leverkusen</td><td>1</td><td>0</td><td>0</td><td>1</td><td>3</td><td>5</td><td>0</td><td>0</td><td></td></tr>
+<tr><td>9</td><td class="team">Sevilla</td><td>1</td><td>0</td><td>0</td><td>1</td><td>2</td><td>5</td><td>0</td><td>0</td><td></td></tr>
+<tr><td>10</td><td class="team">Arsenal</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>4</td><td>0</td><td>0</td><td></td></tr>
+</tbody>
+</table>
+</div>
+
+<audio autoplay loop>
+<source src="sam.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const user = localStorage.getItem("currentUser");
+if (!user) location.href = "index.html";
+welcome.innerText = "Hoş geldin, " + user;
+
+function logout() {
+    localStorage.removeItem("currentUser");
+    location.href = "index.html";
+}
+
+function tabloyuGuncelleVeSirala() {
+    const tbody = document.querySelector("#puanTablosu tbody");
+    const rows = Array.from(tbody.rows);
+
+    rows.forEach(r => {
+        r.cells[8].innerText =
+            parseInt(r.cells[6].innerText) - parseInt(r.cells[7].innerText);
+    });
+
+    rows.sort((a,b)=> b.cells[9].innerText - a.cells[9].innerText);
+    rows.forEach((r,i)=>{ r.cells[0].innerText=i+1; tbody.appendChild(r); });
+}
+
+function secilenTakimlariVurgula() {
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    const u = users.find(x => x.username === user);
+    if (!u) return;
+
+    document.querySelectorAll("tbody tr").forEach(r=>{
+        const t = r.querySelector(".team").innerText;
+        if (u.teams.includes(t)) {
+            r.classList.add("follow-team");
+            r.scrollIntoView({behavior:"smooth",block:"center"});
+        }
+    });
+}
+
+window.onload = ()=>{
+    tabloyuGuncelleVeSirala();
+    secilenTakimlariVurgula();
+};
+</script>
+
+</body>
+</html>
