@@ -20,11 +20,13 @@ button {
     padding: 8px 16px;
     border: none;
     border-radius: 6px;
+    background: crimson;
+    color: white;
     cursor: pointer;
 }
 .table-container {
-    background: white;
-    color: #333;
+    background: #1b1b1b;
+    color: #fff;
     padding: 20px;
     border-radius: 12px;
     max-width: 1200px;
@@ -37,27 +39,25 @@ table {
 th, td {
     padding: 8px;
     text-align: center;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #444;
 }
 th {
-    background: #667eea;
+    background: #0d1b2a;
     color: white;
 }
 .team { text-align: left; font-weight: bold; }
 .follow-team {
-    background: black !important;
+    background: linear-gradient(90deg, #ffe259, #ffa751) !important;
     font-weight: bold;
-    color: #fff !important;
 }
 .follow-team::after {
     content: " ⭐ TAKİP EDİYORSUN";
     font-size: 11px;
-    color: #ffd700;
 }
 .chat-container {
     margin-top: 30px;
     padding: 15px;
-    background: #1c2b4a;
+    background: #0b1e3a;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     max-width: 600px;
@@ -133,7 +133,6 @@ button.send:hover { background: #ddb500; }
 <tr><td>10</td><td class="team">Arsenal</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>4</td><td>0</td><td>0</td><td></td></tr>
 </tbody>
 </table>
-</div>
 
 <div class="chat-container">
     <h2>Lig Sohbeti</h2>
@@ -148,9 +147,9 @@ button.send:hover { background: #ddb500; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
 
-// Firebase config
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCsgGry8f3TkjZF8ejJjawb8vO1yhpQH8s",
   authDomain: "lig-a-794ad.firebaseapp.com",
@@ -159,55 +158,61 @@ const firebaseConfig = {
   messagingSenderId: "868678155723",
   appId: "1:868678155723:web:cba4e929899704523aca4e"
 };
-
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Kullanıcı
 const user = localStorage.getItem("currentUser");
-if (!user) location.href = "index.html";
-document.getElementById("welcome").innerText = "Hoş geldin, " + user;
+if(!user) location.href="index.html";
+document.getElementById("welcome").innerText="Hoş geldin, "+user;
 
-// Logout
-window.logout = ()=> { localStorage.removeItem("currentUser"); location.href="index.html"; };
+// Çıkış
+function logout(){ localStorage.removeItem("currentUser"); location.href="index.html"; }
 
-// Tablo
-function tabloyuGuncelleVeSirala() {
+// Tablo güncelle
+function tabloyuGuncelleVeSirala(){
     const tbody = document.querySelector("#puanTablosu tbody");
     const rows = Array.from(tbody.rows);
-    rows.forEach(r => r.cells[8].innerText = parseInt(r.cells[6].innerText)-parseInt(r.cells[7].innerText));
-    rows.sort((a,b)=> b.cells[9].innerText - a.cells[9].innerText);
-    rows.forEach((r,i)=>{ r.cells[0].innerText=i+1; tbody.appendChild(r); });
+    rows.forEach(r=> r.cells[8].innerText=parseInt(r.cells[6].innerText)-parseInt(r.cells[7].innerText));
+    rows.sort((a,b)=>b.cells[9].innerText - a.cells[9].innerText);
+    rows.forEach((r,i)=> r.cells[0].innerText=i+1, tbody.appendChild(r));
 }
-function secilenTakimlariVurgula() {
+
+// Takımları vurgula
+function secilenTakimlariVurgula(){
     const users = JSON.parse(localStorage.getItem("users")||"[]");
     const u = users.find(x=>x.username===user);
     if(!u) return;
     document.querySelectorAll("tbody tr").forEach(r=>{
         const t = r.querySelector(".team").innerText;
-        if(u.teams.includes(t)) r.classList.add("follow-team");
+        if(u.teams.includes(t)) { r.classList.add("follow-team"); r.scrollIntoView({behavior:"smooth",block:"center"}); }
     });
 }
-window.onload = ()=>{ tabloyuGuncelleVeSirala(); secilenTakimlariVurgula(); };
+
+window.onload=()=>{
+    tabloyuGuncelleVeSirala();
+    secilenTakimlariVurgula();
+};
 
 // Chat
 const chatBox = document.getElementById("chatBox");
 const chatInput = document.getElementById("chatInput");
 const sendBtn = document.getElementById("sendBtn");
+const isAdmin = user==="starking644";
 
-async function sendMessage() {
+// Mesaj gönder
+async function sendMessage(){
     const text = chatInput.value.trim();
     if(!text) return;
-    try {
-        await addDoc(collection(db,"chat"), { user, message:text, timestamp:serverTimestamp() });
+    try{
+        await addDoc(collection(db,"chat"), {user, message:text, timestamp:serverTimestamp()});
         chatInput.value="";
-    } catch(err){ console.error(err); }
+    }catch(err){ console.error(err); }
 }
-
 sendBtn.addEventListener("click", sendMessage);
-chatInput.addEventListener("keypress", e=>{ if(e.key==="Enter") sendMessage(); });
+chatInput.addEventListener("keypress", e=>{if(e.key==="Enter") sendMessage();});
 
+// Mesajları göster ve admin silme
 const chatQuery = query(collection(db,"chat"), orderBy("timestamp","asc"));
 onSnapshot(chatQuery, snapshot=>{
     chatBox.innerHTML="";
@@ -215,8 +220,27 @@ onSnapshot(chatQuery, snapshot=>{
         const data = docSnap.data();
         const div = document.createElement("div");
         div.classList.add("chat-message");
-        if(data.user==="admin") div.classList.add("admin");
-        div.innerText = `${data.user}: ${data.message}`;
+        div.innerText=`${data.user}: ${data.message}`;
+
+        if(data.user==="starking644") div.classList.add("admin");
+
+        if(isAdmin){
+            const delBtn = document.createElement("button");
+            delBtn.innerText="❌";
+            delBtn.style.marginLeft="10px";
+            delBtn.style.cursor="pointer";
+            delBtn.style.background="red";
+            delBtn.style.color="white";
+            delBtn.style.border="none";
+            delBtn.style.borderRadius="4px";
+            delBtn.addEventListener("click", async ()=>{
+                if(confirm("Mesajı silmek istediğine emin misin?")){
+                    await deleteDoc(doc(db,"chat",docSnap.id));
+                }
+            });
+            div.appendChild(delBtn);
+        }
+
         chatBox.appendChild(div);
     });
     chatBox.scrollTop = chatBox.scrollHeight;
