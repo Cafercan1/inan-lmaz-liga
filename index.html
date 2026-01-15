@@ -2,110 +2,200 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Kayıt / Giriş</title>
-<script type="module">
-  // 🔹 MODÜLER FIREBASE
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+<title>Kayıt & Giriş Sistemi</title>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCsgGry8f3TkjZF8ejJjawb8vO1yhpQH8s",
-    authDomain: "lig-a-794ad.firebaseapp.com",
-    projectId: "lig-a-794ad",
-    storageBucket: "lig-a-794ad.appspot.com",
-    messagingSenderId: "868678155723",
-    appId: "1:868678155723:web:cba4e929899704523aca4e",
-    measurementId: "G-HQW4EHNHBE"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  window.registerUser = async () => {
-    const u = document.getElementById("regUser").value.trim();
-    const p = document.getElementById("regPass").value.trim();
-    const t1 = document.getElementById("regTeam1").value;
-    const t2 = document.getElementById("regTeam2").value;
-    const msg = document.getElementById("msg");
-
-    if(!u || !p || !t1){ msg.innerText="Kullanıcı adı, şifre ve en az 1 takım gerekli!"; return;}
-    if(t1===t2 && t2!==""){ msg.innerText="Aynı takımı iki kez seçemezsin"; return;}
-
-    const docRef = doc(db, "users", u);
-    const docSnap = await getDoc(docRef);
-    if(docSnap.exists()){ msg.innerText="Kullanıcı zaten var!"; return; }
-
-    await setDoc(docRef, {
-      username:u,
-      password:p,
-      team1:t1,
-      team2:t2,
-      created:new Date()
-    });
-
-    msg.innerText = "Kayıt başarılı ✅";
-  };
-
-  window.loginUser = async () => {
-    const u = document.getElementById("logUser").value.trim();
-    const p = document.getElementById("logPass").value.trim();
-    const msg = document.getElementById("msg");
-
-    const docRef = doc(db, "users", u);
-    const docSnap = await getDoc(docRef);
-
-    if(!docSnap.exists() || docSnap.data().password !== p){
-      msg.innerText="Hatalı giriş ❌"; return;
+<style>
+    * {
+        box-sizing: border-box;
+        font-family: "Segoe UI", Arial, sans-serif;
     }
 
-    localStorage.setItem("currentUser", u);
-    window.location = "site.html";
-  };
-</script>
-<style>
-body{font-family:Arial;padding:40px}
-input,button,select{display:block;margin:10px 0;padding:8px;width:250px}
+    body {
+        min-height: 100vh;
+        margin: 0;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #333;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 800px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        padding: 30px;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #444;
+    }
+
+    .forms {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+
+    .card {
+        background: #f9f9f9;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: inset 0 0 0 1px #eee;
+    }
+
+    .card h2 {
+        margin-bottom: 15px;
+        text-align: center;
+        color: #555;
+    }
+
+    input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 15px;
+    }
+
+    input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 5px rgba(102,126,234,0.5);
+    }
+
+    button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        background: #667eea;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        background: #5a6fdc;
+        transform: translateY(-1px);
+    }
+
+    .message {
+        margin-top: 10px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .success { color: green; }
+    .error { color: red; }
+
+    /* Tablo Stili (ileride kullanıcı listesi için) */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 30px;
+    }
+
+    table th, table td {
+        padding: 12px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+
+    table th {
+        background: #667eea;
+        color: white;
+    }
+
+    table tr:nth-child(even) {
+        background: #f2f2f2;
+    }
+
+    @media(max-width: 768px) {
+        .forms {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 </head>
+
 <body>
 
-<h2>Kayıt Ol</h2>
-<input id="regUser" placeholder="Kullanıcı adı">
-<input id="regPass" type="password" placeholder="Şifre">
-<select id="regTeam1">
-  <option value="">Takım 1 Seç</option>
-  <option value="Marsilya">Marsilya</option>
-  <option value="Juventus">Juventus</option>
-  <option value="Borussia Dortmund">Borussia Dortmund</option>
-  <option value="İnter">İnter</option>
-  <option value="Lyon">Lyon</option>
-  <option value="Liverpool">Liverpool</option>
-  <option value="Atletico Madrid">Atletico Madrid</option>
-  <option value="Bayer Leverkusen">Bayer Leverkusen</option>
-  <option value="Sevilla">Sevilla</option>
-  <option value="Arsenal">Arsenal</option>
-</select>
-<select id="regTeam2">
-  <option value="">Takım 2 Seç (Opsiyonel)</option>
-  <option value="Marsilya">Marsilya</option>
-  <option value="Juventus">Juventus</option>
-  <option value="Borussia Dortmund">Borussia Dortmund</option>
-  <option value="İnter">İnter</option>
-  <option value="Lyon">Lyon</option>
-  <option value="Liverpool">Liverpool</option>
-  <option value="Atletico Madrid">Atletico Madrid</option>
-  <option value="Bayer Leverkusen">Bayer Leverkusen</option>
-  <option value="Sevilla">Sevilla</option>
-  <option value="Arsenal">Arsenal</option>
-</select>
-<button onclick="registerUser()">Kayıt Ol</button>
+<div class="container">
+    <h1>🔐 Kayıt & Giriş Sistemi</h1>
 
-<h2>Giriş Yap</h2>
-<input id="logUser" placeholder="Kullanıcı adı">
-<input id="logPass" type="password" placeholder="Şifre">
-<button onclick="loginUser()">Giriş</button>
+    <div class="forms">
+        <!-- Kayıt -->
+        <div class="card">
+            <h2>Kayıt Ol</h2>
+            <input type="text" id="regUsername" placeholder="Kullanıcı Adı">
+            <input type="password" id="regPassword" placeholder="Şifre">
+            <button onclick="register()">Kayıt Ol</button>
+            <div id="regMessage" class="message"></div>
+        </div>
 
-<p id="msg"></p>
+        <!-- Giriş -->
+        <div class="card">
+            <h2>Giriş Yap</h2>
+            <input type="text" id="logUsername" placeholder="Kullanıcı Adı">
+            <input type="password" id="logPassword" placeholder="Şifre">
+            <button onclick="login()">Giriş Yap</button>
+            <div id="logMessage" class="message"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function register() {
+        const username = regUsername.value.trim();
+        const password = regPassword.value.trim();
+        const msg = document.getElementById("regMessage");
+
+        if (!username || !password) {
+            msg.textContent = "Boş alan bırakmayın ❌";
+            msg.className = "message error";
+            return;
+        }
+
+        const users = JSON.parse(localStorage.getItem("users") || "[]");
+
+        if (users.find(u => u.username === username)) {
+            msg.textContent = "Kullanıcı zaten mevcut ❌";
+            msg.className = "message error";
+            return;
+        }
+
+        users.push({ username, password });
+        localStorage.setItem("users", JSON.stringify(users));
+
+        msg.textContent = "Kayıt başarılı ✅";
+        msg.className = "message success";
+    }
+
+    function login() {
+        const username = logUsername.value.trim();
+        const password = logPassword.value.trim();
+        const msg = document.getElementById("logMessage");
+
+        const users = JSON.parse(localStorage.getItem("users") || "[]");
+        const user = users.find(u => u.username === username && u.password === password);
+
+        if (user) {
+            localStorage.setItem("currentUser", username);
+            window.location.href = "site.html";
+        } else {
+            msg.textContent = "Hatalı kullanıcı adı veya şifre ❌";
+            msg.className = "message error";
+        }
+    }
+</script>
 
 </body>
 </html>
