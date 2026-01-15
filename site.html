@@ -91,7 +91,7 @@ window.onload = async ()=>{
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 20px;
-    background: #0b1e3a; /* koyu lacivert */
+    background: #0b1e3a; /* koyu lacivert arka plan */
     color: #fff;
 }
 
@@ -99,7 +99,7 @@ h2 {
     margin-bottom: 15px;
     text-align: center;
     color: #f5c518; /* altın sarısı */
-    text-shadow: 2px 2px #000;
+    text-shadow: 1px 1px #000;
 }
 
 .table-container {
@@ -114,18 +114,17 @@ table {
     width: 100%;
     background: #1c2b4a; /* koyu gri-mavi */
     border-radius: 10px;
-    overflow: hidden;
 }
 
 th, td {
     padding: 12px;
     text-align: center;
     border-bottom: 1px solid #2a3a5a;
-    color: #fff; /* yazılar beyaz */
+    color: #fff;
 }
 
 th {
-    background: linear-gradient(90deg, #3b5998, #4c70ba); /* mavi tonları */
+    background: linear-gradient(90deg, #3b5998, #4c70ba);
     font-size: 16px;
 }
 
@@ -155,11 +154,16 @@ tr:hover:not(.user-team) {
 .form .d { background: #6c757d; } /* beraber */
 .form .l { background: #dc3545; } /* kaybetti */
 
-/* Kullanıcı takımlarını vurgulama */
+/* Kullanıcı takımları için okunabilir highlight */
 tr.user-team {
-    background: #f5c518; /* parlak sarı */
-    color: #000000; /* koyu yazı okunabilir */
+    background: #f0a500; /* altın / sarı */
+    color: #ffffff; /* beyaz yazı */
     font-weight: bold;
+}
+
+/* Sadece puan ve form hücrelerini kontrastlı yap */
+tr.user-team td.points, tr.user-team td.form span {
+    color: #ffffff !important;
 }
 
 /* Responsive */
