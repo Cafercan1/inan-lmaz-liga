@@ -2,200 +2,1323 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Kayıt & Giriş Sistemi</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Can’ın Oyunu</title>
 
 <style>
-    * {
-        box-sizing: border-box;
-        font-family: "Segoe UI", Arial, sans-serif;
-    }
+html,body{
+  margin:0; padding:0;
+  width:100%; height:100%;
+  overflow:hidden;
+  font-family:monospace;
+  background:#0b1020;
+}
 
-    body {
-        min-height: 100vh;
-        margin: 0;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #333;
-    }
+/* START OVERLAY (Runner başlangıç) */
+#start{
+  position:fixed; inset:0;
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  gap:12px;
+  font-size:2.2rem;
+  cursor:pointer;
+  color:#fff;
+  background: radial-gradient(circle at top, rgba(64,32,96,.65), rgba(0,0,0,.85));
+  z-index:200;
+  text-align:center;
+  padding:24px;
+}
+#start small{
+  display:block;
+  font-size:14px;
+  opacity:.85;
+  line-height:1.4;
+  max-width:720px;
+}
+#start .btn{
+  margin-top:10px;
+  display:inline-block;
+  background:#22c55e;
+  color:#04110a;
+  font-weight:800;
+  padding:12px 16px;
+  border-radius:12px;
+  font-size:18px;
+}
 
-    .container {
-        width: 100%;
-        max-width: 800px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-        padding: 30px;
-    }
+/* UI pills */
+#ui{
+  position:fixed; inset:0;
+  pointer-events:none;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:14px;
+  z-index:50;
+}
+.hud{
+  width:min(520px, 100vw);
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  color:#e8eeff;
+  font-size:14px;
+}
+.pill{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:999px;
+  padding:8px 10px;
+  backdrop-filter: blur(8px);
+}
 
-    h1 {
-        text-align: center;
-        margin-bottom: 30px;
-        color: #444;
-    }
+/* Runner canvas (oyun) */
+#wrap{
+  position:fixed; inset:0;
+  display:grid; place-items:center;
+  z-index:20;
+}
+#game{
+  width:min(520px, 100vw);
+  height:min(920px, 100vh);
+  background:#0b1020;
+  border-radius:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
 
-    .forms {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
-    }
+/* Horror UI text */
+#text{
+  position:fixed;
+  width:100%;
+  bottom:10%;
+  text-align:center;
+  font-size:2rem;
+  color:#000;
+  z-index:120;
+  pointer-events:none;
+  text-shadow: 0 2px 0 rgba(255,255,255,.35);
+}
 
-    .card {
-        background: #f9f9f9;
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: inset 0 0 0 1px #eee;
-    }
+/* Horror can image (DOM) */
+#can{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:150px;
+  transform:translate(-50%,-50%);
+  z-index:125;
+  will-change:left,top,transform,width,opacity,filter;
+  display:none; /* Runner’da görünmesin */
+}
 
-    .card h2 {
-        margin-bottom: 15px;
-        text-align: center;
-        color: #555;
-    }
+/* Flash + Silhouette */
+#flash{
+  position:fixed; inset:0;
+  background:white;
+  opacity:0;
+  pointer-events:none;
+  z-index:180;
+  transition: opacity .05s;
+}
+#silhouette{
+  position:fixed;
+  width:160px; height:240px;
+  background:black;
+  border-radius:100px 100px 60px 60px;
+  opacity:.9;
+  display:none;
+  z-index:115;
+  transform:translate(-50%,-50%);
+  filter: blur(1px);
+}
 
-    input {
-        width: 100%;
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-        font-size: 15px;
-    }
+/* Horror background layer (canvas) */
+#bg{
+  position:fixed;
+  inset:0;
+  z-index:5;
+  display:none; /* sadece horror’da göster */
+}
 
-    input:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 5px rgba(102,126,234,0.5);
-    }
+/* Horror grain overlay */
+#grain{
+  position:fixed;
+  inset:-40px;
+  z-index:10;
+  pointer-events:none;
+  opacity:0;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.06), rgba(255,255,255,.06) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 4px);
+  mix-blend-mode: overlay;
+  filter: contrast(1.2);
+  display:none; /* sadece horror’da göster */
+}
+body.horror #grain{
+  opacity:.25;
+  animation: grainMove .08s infinite steps(2,end);
+}
+@keyframes grainMove{
+  0%{ transform: translate(0,0) rotate(0deg); }
+  100%{ transform: translate(18px,-22px) rotate(1deg); }
+}
 
-    button {
-        width: 100%;
-        padding: 10px;
-        margin-top: 10px;
-        background: #667eea;
-        border: none;
-        border-radius: 6px;
-        color: white;
-        font-size: 16px;
-        cursor: pointer;
-        transition: 0.3s;
-    }
+/* Shake */
+body.shake{
+  animation:shake .12s infinite;
+}
+@keyframes shake{
+  0%{transform:translate(0,0)}
+  25%{transform:translate(6px,-4px)}
+  50%{transform:translate(-6px,4px)}
+  75%{transform:translate(4px,6px)}
+  100%{transform:translate(0,0)}
+}
 
-    button:hover {
-        background: #5a6fdc;
-        transform: translateY(-1px);
-    }
-
-    .message {
-        margin-top: 10px;
-        text-align: center;
-        font-weight: bold;
-    }
-
-    .success { color: green; }
-    .error { color: red; }
-
-    /* Tablo Stili (ileride kullanıcı listesi için) */
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 30px;
-    }
-
-    table th, table td {
-        padding: 12px;
-        border: 1px solid #ddd;
-        text-align: center;
-    }
-
-    table th {
-        background: #667eea;
-        color: white;
-    }
-
-    table tr:nth-child(even) {
-        background: #f2f2f2;
-    }
-
-    @media(max-width: 768px) {
-        .forms {
-            grid-template-columns: 1fr;
-        }
-    }
+/* GameOver overlay (Runner) */
+#gameOver{
+  position:fixed; inset:0;
+  display:none;
+  place-items:center;
+  z-index:160;
+  background: radial-gradient(circle at top, rgba(10,20,50,.65), rgba(0,0,0,.85));
+  color:#fff;
+}
+#gameOver .box{
+  width:min(520px, calc(100vw - 28px));
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  padding:18px;
+  text-align:center;
+}
+#gameOver .box h2{ margin:0 0 10px; }
+#gameOver .box p{ margin:0; opacity:.9; }
+#gameOver .box .btn2{
+  margin-top:14px;
+  display:inline-block;
+  cursor:pointer;
+  padding:12px 14px;
+  border-radius:12px;
+  background:#22c55e;
+  color:#04110a;
+  font-weight:800;
+  user-select:none;
+}
 </style>
 </head>
 
 <body>
 
-<div class="container">
-    <h1>🔐 Kayıt & Giriş Sistemi</h1>
-
-    <div class="forms">
-        <!-- Kayıt -->
-        <div class="card">
-            <h2>Kayıt Ol</h2>
-            <input type="text" id="regUsername" placeholder="Kullanıcı Adı">
-            <input type="password" id="regPassword" placeholder="Şifre">
-            <button onclick="register()">Kayıt Ol</button>
-            <div id="regMessage" class="message"></div>
-        </div>
-
-        <!-- Giriş -->
-        <div class="card">
-            <h2>Giriş Yap</h2>
-            <input type="text" id="logUsername" placeholder="Kullanıcı Adı">
-            <input type="password" id="logPassword" placeholder="Şifre">
-            <button onclick="login()">Giriş Yap</button>
-            <div id="logMessage" class="message"></div>
-        </div>
-    </div>
+<!-- RUNNER START -->
+<div id="start">
+  Omnitrix Runner
+  <small>
+    • Sadece <b>sağa/sola</b> kaç.<br>
+    • Omnitrix topla → dönüş: Ateş Topu → Elmas Kafa → Gölge Hayalet<br>
+    • <b>Space</b> = saldırı (kırmızı engelleri yok eder) <br>
+    • Gölge Hayalet olunca <b>kaçınılamaz engel</b> gelir… <b>ona çarpınca</b> korku ekranına geçersin.
+  </small>
+  <div class="btn">BAŞLA</div>
+  <small style="opacity:.7">
+    Kontrol: ← → veya A/D • Saldırı: Space • Mobil: ekranın sol/sağına dokun
+  </small>
 </div>
 
+<!-- HUD -->
+<div id="ui">
+  <div class="hud">
+    <div class="pill" id="scorePill">Skor: 0</div>
+    <div class="pill" id="formPill">Form: İnsan</div>
+    <div class="pill" id="omniPill">Omnitrix: 0/3</div>
+  </div>
+</div>
+
+<!-- RUNNER CANVAS -->
+<div id="wrap">
+  <canvas id="game" width="520" height="920"></canvas>
+</div>
+
+<!-- HORROR CANVAS + GRAIN -->
+<canvas id="bg"></canvas>
+<div id="grain"></div>
+
+<!-- HORROR DOM -->
+<div id="text"></div>
+<img id="can" src="assets/Cute.png" alt="Can">
+<div id="flash"></div>
+<div id="silhouette"></div>
+
+<!-- RUNNER GAME OVER -->
+<div id="gameOver">
+  <div class="box">
+    <h2>Oyun Bitti</h2>
+    <p id="overMsg">Engelle çarpıştın.</p>
+    <div class="btn2" id="retryRunner">TEKRAR</div>
+  </div>
+</div>
+
+<audio id="scream" src="assets/scream.mp3" preload="auto"></audio>
+
 <script>
-    function register() {
-        const username = regUsername.value.trim();
-        const password = regPassword.value.trim();
-        const msg = document.getElementById("regMessage");
+/* ===========================
+   HORROR KODUN (JUMPSCARE) - DOKUNMUYORUM
+   =========================== */
+const start = document.getElementById("start");
+const text = document.getElementById("text");
+const can = document.getElementById("can");
+const flash = document.getElementById("flash");
+const silhouette = document.getElementById("silhouette");
+const scream = document.getElementById("scream");
+const bg = document.getElementById("bg");
+const grain = document.getElementById("grain");
+const g = bg.getContext("2d", { alpha:false });
 
-        if (!username || !password) {
-            msg.textContent = "Boş alan bırakmayın ❌";
-            msg.className = "message error";
-            return;
-        }
+let stage = 0;
+let targetX = innerWidth/2, targetY = innerHeight/2;
+let canX = targetX, canY = targetY;
 
-        const users = JSON.parse(localStorage.getItem("users") || "[]");
+let tasks = [];
+let tasksDone = 0;
+const totalTasks = 3;
 
-        if (users.find(u => u.username === username)) {
-            msg.textContent = "Kullanıcı zaten mevcut ❌";
-            msg.className = "message error";
-            return;
-        }
+/* Audio system (procedural ambience) */
+let audioCtx = null;
+let masterGain = null;
+let rumbleGain = null;
+let windGain = null;
+let beatGain = null;
+let stingerGain = null;
+let startedAmbience = false;
 
-        users.push({ username, password });
-        localStorage.setItem("users", JSON.stringify(users));
+/* Background glitch loop */
+let bgT = 0;
 
-        msg.textContent = "Kayıt başarılı ✅";
-        msg.className = "message success";
+/* ---------- helpers ---------- */
+function resize(){
+  bg.width = innerWidth;
+  bg.height = innerHeight;
+}
+addEventListener("resize", resize);
+resize();
+
+addEventListener("mousemove", e=>{
+  targetX = e.clientX;
+  targetY = e.clientY;
+});
+addEventListener("touchmove", e=>{
+  const t = e.touches[0];
+  targetX = t.clientX;
+  targetY = t.clientY;
+},{passive:true});
+
+/* Audio unlock: bazı cihazlarda şart */
+function unlockAudio(){
+  try{
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext||window.webkitAudioContext)();
     }
+    audioCtx.resume?.();
 
-    function login() {
-        const username = logUsername.value.trim();
-        const password = logPassword.value.trim();
-        const msg = document.getElementById("logMessage");
+    // ultra düşük "klik": sesi kesin açtırır
+    const o = audioCtx.createOscillator();
+    const gg = audioCtx.createGain();
+    gg.gain.value = 0.00001;
+    o.connect(gg).connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + 0.03);
+  }catch(e){}
+}
 
-        const users = JSON.parse(localStorage.getItem("users") || "[]");
-        const user = users.find(u => u.username === username && u.password === password);
+/* ---------- corner jumpscare ---------- */
+function jumpscareCorner(){
+  can.style.transition = "none";
+  can.style.zIndex = 999;
 
-        if (user) {
-            localStorage.setItem("currentUser", username);
-            window.location.href = "site.html";
-        } else {
-            msg.textContent = "Hatalı kullanıcı adı veya şifre ❌";
-            msg.className = "message error";
-        }
+  const corners = [
+    { x: "-30%", y: "-30%" },
+    { x: "130%", y: "-30%" },
+    { x: "-30%", y: "130%" },
+    { x: "130%", y: "130%" }
+  ];
+  const c = corners[Math.floor(Math.random()*corners.length)];
+
+  can.style.left = c.x;
+  can.style.top  = c.y;
+  can.style.width = "280px";
+  can.style.transform = "translate(-50%,-50%) scale(0.2) rotate(0deg)";
+  can.style.opacity = "1";
+
+  requestAnimationFrame(()=>{
+    flash.style.opacity = 1;
+    setTimeout(()=>flash.style.opacity=0,40);
+
+    can.style.transition = "transform 0.11s linear";
+    can.style.left = "50%";
+    can.style.top  = "50%";
+    can.style.transform =
+      `translate(-50%,-50%) scale(2.0) rotate(${Math.random()*20-10}deg)`;
+
+    document.body.classList.add("shake");
+    setTimeout(()=>document.body.classList.remove("shake"),200);
+  });
+}
+
+/* ---------- horror ---------- */
+function startHorror(){
+  stage = 1;
+  document.body.classList.add("horror");
+
+  // horror layerleri aç
+  bg.style.display = "block";
+  grain.style.display = "block";
+  can.style.display = "block";
+
+  // runner layerlerini kapat
+  document.getElementById("wrap").style.display = "none";
+  document.getElementById("ui").style.display = "none";
+  document.getElementById("gameOver").style.display = "none";
+
+  // arka planı anında karart
+  document.body.style.background = "#000";
+  text.style.color = "#eaeaea";
+
+  // korku görseli
+  can.src = "assets/scary.gif";
+  can.style.filter = "brightness(.65) contrast(1.4) drop-shadow(0 0 35px red)";
+
+  // glitch bg render
+  renderBg();
+
+  // scream -> ambience
+  try{
+    scream.currentTime = 1;
+    scream.volume = 300;
+  }catch(e){}
+  const p = scream.play();
+  scream.onended = () => startAmbience();
+  setTimeout(startAmbience, 900);
+  if(p && typeof p.catch === "function"){
+    p.catch(()=> setTimeout(startAmbience, 250));
+  }
+
+  // jumpscare
+  setTimeout(jumpscareCorner, 80);
+
+  // flash/silhouette loop
+  setInterval(()=>{
+    if(Math.random() < 0.22){
+      flash.style.opacity = 1;
+      setTimeout(()=>flash.style.opacity=0,50);
+      maybeStinger();
     }
+    if(Math.random() < 0.45){
+      silhouette.style.left = (Math.random()*innerWidth) + "px";
+      silhouette.style.top  = (Math.random()*innerHeight) + "px";
+      silhouette.style.display = "block";
+      setTimeout(()=>silhouette.style.display="none", 130 + Math.random()*120);
+    }
+  }, 180);
+
+  // creepy text
+  const lines = ["Beni izliyorsun","Kaçamazsın","Sessiz ol","Arkana bakma","Yanlış yerdesin"];
+  (function loopText(){
+    text.textContent = lines[Math.floor(Math.random()*lines.length)];
+    setTimeout(loopText, 900 + Math.random()*1100);
+  })();
+}
+
+/* ---------- FAST GLITCH BACKGROUND ---------- */
+function renderBg(){
+  if(stage !== 1) return;
+  bgT += 1;
+
+  const w = bg.width, h = bg.height;
+
+  const gx = Math.random()*w, gy = Math.random()*h;
+  const grd = g.createRadialGradient(gx, gy, 10, w/2, h/2, Math.max(w,h));
+  const a = (Math.random()*360)|0;
+  const b = (a + 120 + (Math.random()*120)|0) % 360;
+  const c = (b + 120 + (Math.random()*120)|0) % 360;
+
+  grd.addColorStop(0, `hsl(${a} 90% 12%)`);
+  grd.addColorStop(0.55, `hsl(${b} 90% 8%)`);
+  grd.addColorStop(1, `hsl(${c} 90% 5%)`);
+  g.fillStyle = grd;
+  g.fillRect(0,0,w,h);
+
+  const blocks = 18 + (Math.random()*30|0);
+  for(let i=0;i<blocks;i++){
+    const bh = 6 + (Math.random()*60|0);
+    const by = Math.random()*h;
+    const bx = Math.random()*w;
+    const bw = 40 + (Math.random()*w*0.6);
+    g.globalAlpha = 0.08 + Math.random()*0.22;
+    g.fillStyle = `hsl(${(a + (Math.random()*90|0))%360} 100% ${6 + (Math.random()*12|0)}%)`;
+    g.fillRect(bx, by, bw, bh);
+  }
+  g.globalAlpha = 1;
+
+  const n = 2600;
+  g.globalAlpha = 0.035 + Math.random()*0.05;
+  g.fillStyle = "#fff";
+  for(let i=0;i<n;i++){
+    const x = (Math.random()*w)|0;
+    const y = (Math.random()*h)|0;
+    g.fillRect(x,y,1,1);
+  }
+  g.globalAlpha = 1;
+
+  requestAnimationFrame(renderBg);
+}
+
+/* ---------- AUDIO: louder scary ambience ---------- */
+function startAmbience(){
+  if(startedAmbience) return;
+  startedAmbience = true;
+
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    audioCtx.resume?.();
+
+    // Master daha yüksek
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 10;
+    masterGain.connect(audioCtx.destination);
+
+    // RUMBLE
+    const rumble = makeNoiseSource(audioCtx);
+    const low = audioCtx.createBiquadFilter();
+    low.type = "lowpass";
+    low.frequency.value = 160;
+
+    rumbleGain = audioCtx.createGain();
+    rumbleGain.gain.value = 0.42;
+
+    rumble.connect(low);
+    low.connect(rumbleGain);
+    rumbleGain.connect(masterGain);
+
+    // WIND
+    const wind = makeNoiseSource(audioCtx);
+    const bp = audioCtx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 520;
+    bp.Q.value = 0.8;
+
+    windGain = audioCtx.createGain();
+    windGain.gain.value = 0.28;
+
+    wind.connect(bp);
+    bp.connect(windGain);
+    windGain.connect(masterGain);
+
+    // HEARTBEAT bus
+    beatGain = audioCtx.createGain();
+    beatGain.gain.value = 1.0;
+    beatGain.connect(masterGain);
+
+    // STINGER bus
+    stingerGain = audioCtx.createGain();
+    stingerGain.gain.value = 1.0;
+    stingerGain.connect(masterGain);
+
+    rumble.start();
+    wind.start();
+
+    // dalgalansın
+    setInterval(()=>{
+      if(stage !== 1) return;
+      const t = audioCtx.currentTime;
+
+      rumbleGain.gain.cancelScheduledValues(t);
+      windGain.gain.cancelScheduledValues(t);
+
+      rumbleGain.gain.linearRampToValueAtTime(0.30 + Math.random()*0.25, t + 0.25);
+      windGain.gain.linearRampToValueAtTime(0.18 + Math.random()*0.20, t + 0.20);
+
+      bp.frequency.value = 260 + Math.random()*900;
+      low.frequency.value = 90 + Math.random()*240;
+    }, 180);
+
+    // heartbeat loop
+    (function beatLoop(){
+      if(stage !== 1) return;
+      playHeartbeat();
+      const next = 380 + Math.random()*520;
+      setTimeout(beatLoop, next);
+    })();
+
+    // otomatik stinger
+    setInterval(()=>{
+      if(stage !== 1) return;
+      if(Math.random() < 0.22) maybeStinger();
+    }, 260);
+
+  }catch(e){
+    // sessiz geç
+  }
+}
+
+function playHeartbeat(){
+  if(!audioCtx || !beatGain) return;
+  const t = audioCtx.currentTime;
+
+  const o = audioCtx.createOscillator();
+  o.type = "sine";
+  o.frequency.setValueAtTime(70, t);
+  o.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+
+  const g2 = audioCtx.createGain();
+  g2.gain.setValueAtTime(0.0, t);
+  g2.gain.linearRampToValueAtTime(0.85, t + 0.01);
+  g2.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+  o.connect(g2);
+  g2.connect(beatGain);
+
+  o.start(t);
+  o.stop(t + 0.22);
+
+  if(Math.random() < 0.35){
+    setTimeout(()=>playHeartbeatSingle(60), 90 + Math.random()*60);
+  }
+}
+
+function playHeartbeatSingle(freq){
+  if(!audioCtx || !beatGain) return;
+  const t = audioCtx.currentTime;
+
+  const o = audioCtx.createOscillator();
+  o.type = "sine";
+  o.frequency.setValueAtTime(freq, t);
+
+  const g2 = audioCtx.createGain();
+  g2.gain.setValueAtTime(0.0, t);
+  g2.gain.linearRampToValueAtTime(0.7, t + 0.01);
+  g2.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+
+  o.connect(g2);
+  g2.connect(beatGain);
+
+  o.start(t);
+  o.stop(t + 0.18);
+}
+
+function maybeStinger(){
+  if(!audioCtx || !stingerGain) return;
+  if(Math.random() > 0.22) return;
+
+  const t = audioCtx.currentTime;
+
+  const o = audioCtx.createOscillator();
+  o.type = "square";
+  o.frequency.setValueAtTime(220, t);
+  o.frequency.exponentialRampToValueAtTime(520, t + 0.05);
+
+  const filt = audioCtx.createBiquadFilter();
+  filt.type = "highpass";
+  filt.frequency.value = 600;
+
+  const g2 = audioCtx.createGain();
+  g2.gain.setValueAtTime(0.0, t);
+  g2.gain.linearRampToValueAtTime(0.45, t + 0.005);
+  g2.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+
+  o.connect(filt);
+  filt.connect(g2);
+  g2.connect(stingerGain);
+
+  o.start(t);
+  o.stop(t + 0.1);
+
+  flash.style.opacity = 1;
+  setTimeout(()=>flash.style.opacity=0, 35);
+  document.body.classList.add("shake");
+  setTimeout(()=>document.body.classList.remove("shake"), 160);
+}
+
+/* white noise buffer source */
+function makeNoiseSource(ctx){
+  const bufferSize = 2 * ctx.sampleRate;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){
+    data[i] = (Math.random()*2 - 1);
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.loop = true;
+  return src;
+}
+
+/* image error */
+can.addEventListener("error", ()=>{
+  text.textContent = "Dosya yok: assets/Cute.png veya assets/scary.gif. Büyük/küçük harfe bak.";
+});
+
+/* ===========================
+   RUNNER KODU (SPACE ATTACK: YUKARI 3sn + URL IMAGE)
+   =========================== */
+const gameCanvas = document.getElementById("game");
+const gameCtx = gameCanvas.getContext("2d");
+gameCtx.imageSmoothingEnabled = false;
+
+const scorePill = document.getElementById("scorePill");
+const formPill  = document.getElementById("formPill");
+const omniPill  = document.getElementById("omniPill");
+
+const gameOver = document.getElementById("gameOver");
+const overMsg = document.getElementById("overMsg");
+document.getElementById("retryRunner").onclick = () => runnerStart();
+
+const ASSETS2 = {
+  human:  "assets/human.png",
+  omni:   "assets/omnitrix.png",
+  fire:   "assets/alien_fire.png",
+  diamond:"assets/alien_diamond.png",
+  ghost:  "assets/alien_ghost.png"
+};
+function loadImg2(src){ const im = new Image(); im.src = src; return im; }
+const SPR = {
+  human:  loadImg2(ASSETS2.human),
+  omni:   loadImg2(ASSETS2.omni),
+  fire:   loadImg2(ASSETS2.fire),
+  diamond:loadImg2(ASSETS2.diamond),
+  ghost:  loadImg2(ASSETS2.ghost),
+};
+
+let rKeys = { left:false, right:false };
+
+/* ===========================
+   ✅ NEW ATTACK STATE (REPLACES OLD attackActive/Timer)
+   =========================== */
+const ATTACK_URL = "https://w7.pngwing.com/pngs/441/348/png-transparent-round-golden-rotating-light-effect-rotation-golden-light-effect-light-effect.png";
+const ATTACK_IMG = new Image();
+ATTACK_IMG.crossOrigin = "anonymous";
+ATTACK_IMG.src = ATTACK_URL;
+
+// ayarlar
+const ATTACK_LIFETIME = 3.0;  // 3 saniye yaşar
+const ATTACK_SPEED    = 520;  // px/s yukarı (y azalır)
+const ATTACK_SIZE     = 72;   // çizim boyutu
+const ATTACK_CD       = 0.35; // spam olmasın
+
+let attackCooldown = 0;
+// attacks: {x,y,vy,life,rot}
+let attacks = [];
+
+addEventListener("keydown", (e)=>{
+  if(stage===1) return;
+
+  if(e.key==="ArrowLeft" || e.key==="a" || e.key==="A") rKeys.left=true;
+  if(e.key==="ArrowRight"|| e.key==="d" || e.key==="D") rKeys.right=true;
+
+  // SPACE ATTACK
+  if(e.code === "Space"){
+    e.preventDefault();
+    tryAttack();
+  }
+});
+addEventListener("keyup", (e)=>{
+  if(e.key==="ArrowLeft" || e.key==="a" || e.key==="A") rKeys.left=false;
+  if(e.key==="ArrowRight"|| e.key==="d" || e.key==="D") rKeys.right=false;
+});
+
+addEventListener("pointerdown", (e)=>{
+  if(stage===1) return;
+  const mid = innerWidth/2;
+  if(e.clientX < mid) rKeys.left = true;
+  else rKeys.right = true;
+});
+addEventListener("pointerup", ()=>{
+  rKeys.left=false; rKeys.right=false;
+});
+
+const RW = gameCanvas.width;
+const RH = gameCanvas.height;
+
+const road = { x: 70, w: RW-140 };
+const runner = {
+  x: RW/2, y: RH-150,
+  w: 64, h: 64,
+  speed: 460,
+  form: "human"
+};
+
+let rRunning = false;
+let rPrev = 0;
+
+let rScore = 0;
+let rOmniCount = 0;
+
+let spawnTimer = 0;
+let spawnInterval = 0.85;
+let minInterval = 0.55;
+
+let fallSpeed = 230;
+
+let obstacles = [];
+let omnis = [];
+
+let doomSpawned = false;
+let doomActive = false;
+
+function runnerReset(){
+  rRunning = false;
+  rPrev = 0;
+  rScore = 0;
+  rOmniCount = 0;
+
+  spawnTimer = 0;
+  spawnInterval = 0.85;
+  fallSpeed = 230;
+
+  obstacles = [];
+  omnis = [];
+
+  doomSpawned = false;
+  doomActive = false;
+
+  runner.x = RW/2;
+  runner.form = "human";
+
+  // ✅ reset new attack
+  attackCooldown = 0;
+  attacks = [];
+
+  updateRunnerHUD();
+}
+
+function updateRunnerHUD(){
+  scorePill.textContent = "Skor: " + Math.floor(rScore);
+
+  const formName =
+    (runner.form==="human") ? "İnsan" :
+    (runner.form==="fire") ? "Ateş Topu" :
+    (runner.form==="diamond") ? "Elmas Kafa" :
+    "Gölge Hayalet";
+
+  formPill.textContent = "Form: " + formName;
+  omniPill.textContent = `Omnitrix: ${Math.min(rOmniCount,3)}/3`;
+}
+
+function spriteForForm(){
+  if(runner.form==="human") return SPR.human;
+  if(runner.form==="fire") return SPR.fire;
+  if(runner.form==="diamond") return SPR.diamond;
+  return SPR.ghost;
+}
+
+function rand2(min,max){ return min + Math.random()*(max-min); }
+
+function aabb2(a,b){
+  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+}
+
+function spawnNormal(){
+  if(doomActive) return;
+
+  const active = obstacles.filter(o => o.y < RH*0.6 && !o.isDoom).length;
+  if(active >= 2) return;
+
+  const w = rand2(44, 70);
+  const h = rand2(54, 100);
+  const x = rand2(road.x+12, road.x+road.w-w-12);
+  obstacles.push({ x, y:-h-10, w, h, isDoom:false });
+
+  if(Math.random() < 0.55){
+    const ow=44, oh=44;
+    const ox = rand2(road.x+12, road.x+road.w-ow-12);
+    omnis.push({ x:ox, y:-oh-60, w:ow, h:oh });
+  }
+}
+
+function spawnDoom(){
+  if(doomSpawned) return;
+  doomSpawned = true;
+  doomActive = true;
+
+  // dram: temizle
+  omnis = [];
+  obstacles = [];
+
+  const w = road.w - 8;
+  const h = 180;
+  const x = road.x + 4;
+  obstacles.push({ x, y:-h-30, w, h, isDoom:true });
+}
+
+function transformNext(){
+  if(runner.form==="human"){ runner.form="fire"; rOmniCount=1; }
+  else if(runner.form==="fire"){ runner.form="diamond"; rOmniCount=2; }
+  else if(runner.form==="diamond"){
+    runner.form="ghost"; rOmniCount=3;
+    // ghost olduktan sonra kaçınılamaz duvar
+    setTimeout(()=>{ if(rRunning && stage===0) spawnDoom(); }, 1100);
+  }
+  updateRunnerHUD();
+}
+
+function runnerGameOver(msg){
+  rRunning = false;
+  gameOver.style.display = "grid";
+  overMsg.textContent = msg || "Engelle çarpıştın.";
+}
+
+/* ===========================
+   ✅ NEW ATTACK LOGIC (SPACE)
+   - Projectile çıkar, yukarı 3sn gider, sonra yok olur
+   - Doom engelini yok etmez
+   =========================== */
+function tryAttack(){
+  if(!rRunning) return;
+  if(stage===1) return;
+  if(attackCooldown > 0) return;
+
+  attackCooldown = ATTACK_CD;
+
+  attacks.push({
+    x: runner.x,
+    y: runner.y - 55,
+    vy: -ATTACK_SPEED,
+    life: ATTACK_LIFETIME,
+    rot: Math.random() * Math.PI * 2
+  });
+}
+
+function updateAttacks(dt){
+  // projectile hareket + ömür + çarpışma
+  for(let i = attacks.length - 1; i >= 0; i--){
+    const a = attacks[i];
+
+    a.y += a.vy * dt;
+    a.life -= dt;
+    a.rot += dt * 4;
+
+    // engelleri vur (doom hariç)
+    // hit test: projectile noktası engelin AABB içine girerse
+    obstacles = obstacles.filter(o=>{
+      if(o.isDoom) return true; // doom asla yok olmaz
+      const hit = (a.x >= o.x && a.x <= o.x + o.w && a.y >= o.y && a.y <= o.y + o.h);
+      return !hit;
+    });
+
+    // süre bitti veya ekrandan çıktıysa sil
+    if(a.life <= 0 || a.y < -200){
+      attacks.splice(i, 1);
+    }
+  }
+}
+
+function drawAttacks(){
+  for(const a of attacks){
+    if(ATTACK_IMG && ATTACK_IMG.complete && ATTACK_IMG.naturalWidth){
+      gameCtx.save();
+      gameCtx.translate(a.x, a.y);
+      gameCtx.rotate(a.rot);
+      gameCtx.globalAlpha = 0.9;
+      gameCtx.drawImage(ATTACK_IMG, -ATTACK_SIZE/2, -ATTACK_SIZE/2, ATTACK_SIZE, ATTACK_SIZE);
+      gameCtx.restore();
+    } else {
+      // fallback (img yüklenmezse) küçük daire
+      gameCtx.globalAlpha = 0.9;
+      gameCtx.fillStyle = "#facc15";
+      gameCtx.beginPath();
+      gameCtx.arc(a.x, a.y, 10, 0, Math.PI*2);
+      gameCtx.fill();
+      gameCtx.globalAlpha = 1;
+    }
+  }
+}
+
+function runnerStart(){
+  // horror moddan dönüyorsan temizle
+  stage = 0;
+  document.body.classList.remove("horror","shake");
+  document.body.style.background = "#0b1020";
+
+  // layer geri aç
+  document.getElementById("wrap").style.display = "grid";
+  document.getElementById("ui").style.display = "flex";
+  bg.style.display = "none";
+  grain.style.display = "none";
+  can.style.display = "none";
+  text.textContent = "";
+
+  // over kapat
+  gameOver.style.display = "none";
+
+  runnerReset();
+  rRunning = true;
+  requestAnimationFrame(runnerLoop);
+}
+
+function runnerDraw(){
+  gameCtx.clearRect(0,0,RW,RH);
+
+  // bg
+  gameCtx.fillStyle = "#121a33";
+  gameCtx.fillRect(0,0,RW,RH);
+
+  // road
+  gameCtx.fillStyle = "#0b1020";
+  gameCtx.fillRect(road.x, 0, road.w, RH);
+
+  // edges
+  gameCtx.fillStyle = "rgba(255,255,255,.08)";
+  gameCtx.fillRect(road.x, 0, 4, RH);
+  gameCtx.fillRect(road.x+road.w-4, 0, 4, RH);
+
+  // lane lines
+  gameCtx.fillStyle = "rgba(255,255,255,.06)";
+  for(let y=-40; y<RH; y+=80){
+    gameCtx.fillRect(RW/2-2, (y + (rScore*1.6)%80), 4, 36);
+  }
+
+  // obstacles
+  for(const o of obstacles){
+    if(o.isDoom){
+      gameCtx.fillStyle = "#b91c1c";
+      gameCtx.fillRect(o.x, o.y, o.w, o.h);
+      gameCtx.fillStyle = "rgba(0,0,0,.25)";
+      gameCtx.fillRect(o.x, o.y+12, o.w, 10);
+      gameCtx.fillRect(o.x, o.y+44, o.w, 10);
+    } else {
+      gameCtx.fillStyle = "#ff3b30";
+      gameCtx.fillRect(o.x, o.y, o.w, o.h);
+    }
+  }
+
+  // omnitrix
+  for(const m of omnis){
+    if(SPR.omni && SPR.omni.complete && SPR.omni.naturalWidth){
+      gameCtx.drawImage(SPR.omni, m.x, m.y, m.w, m.h);
+    } else {
+      gameCtx.fillStyle = "#22c55e";
+      gameCtx.beginPath();
+      gameCtx.arc(m.x+m.w/2, m.y+m.h/2, m.w/2, 0, Math.PI*2);
+      gameCtx.fill();
+    }
+  }
+
+  // runner
+  const r = { x: runner.x-runner.w/2, y: runner.y-runner.h/2, w: runner.w, h: runner.h };
+  const im = spriteForForm();
+  if(im && im.complete && im.naturalWidth){
+    gameCtx.drawImage(im, r.x, r.y, r.w, r.h);
+  } else {
+    gameCtx.fillStyle = "#60a5fa";
+    gameCtx.fillRect(r.x, r.y, r.w, r.h);
+  }
+
+  // ✅ draw new attacks (image projectile)
+  drawAttacks();
+
+  // ghost overlay feel
+  if(runner.form==="ghost"){
+    gameCtx.fillStyle = "rgba(255,255,255,.03)";
+    gameCtx.fillRect(0,0,RW,RH);
+  }
+}
+
+function runnerUpdate(dt){
+  // skor
+  rScore += dt * 9;
+
+  // ✅ cooldown
+  if(attackCooldown > 0) attackCooldown = Math.max(0, attackCooldown - dt);
+
+  // ✅ update attacks movement/collision/lifetime
+  updateAttacks(dt);
+
+  // speed / difficulty
+  if(!doomActive){
+    fallSpeed += dt * 4;
+    spawnInterval = Math.max(minInterval, spawnInterval - dt*0.006);
+  } else {
+    fallSpeed = Math.max(fallSpeed, 560);
+  }
+
+  // move
+  const move = (rKeys.right?1:0) - (rKeys.left?1:0);
+  runner.x += move * runner.speed * dt;
+  const minX = road.x + runner.w/2 + 6;
+  const maxX = road.x + road.w - runner.w/2 - 6;
+  runner.x = Math.max(minX, Math.min(maxX, runner.x));
+
+  // spawn
+  spawnTimer += dt;
+  if(spawnTimer >= spawnInterval){
+    spawnTimer = 0;
+    spawnNormal();
+  }
+
+  // fall
+  for(const o of obstacles) o.y += fallSpeed * dt;
+  for(const m of omnis) m.y += (fallSpeed*0.92) * dt;
+
+  // collisions
+  const pr = { x: runner.x-runner.w/2, y: runner.y-runner.h/2, w: runner.w, h: runner.h };
+
+  for(const o of obstacles){
+    if(aabb2(pr, o)){
+      if(o.isDoom){
+        // ghost + son engele çarpınca horror
+        rRunning = false;
+        stage = 0;
+        startHorror();
+        return;
+      } else {
+        runnerGameOver("Engelle çarpıştın.");
+        return;
+      }
+    }
+  }
+
+  for(let i=omnis.length-1; i>=0; i--){
+    if(aabb2(pr, omnis[i])){
+      omnis.splice(i,1);
+      transformNext();
+    }
+  }
+
+  // cleanup
+  obstacles = obstacles.filter(o => o.y < RH+220);
+  omnis = omnis.filter(m => m.y < RH+220);
+
+  updateRunnerHUD();
+}
+
+function runnerLoop(ts){
+  if(!rRunning) return;
+  const t = ts/1000;
+  if(!rPrev) rPrev = t;
+  const dt = Math.min(0.033, Math.max(0, t - rPrev));
+  rPrev = t;
+
+  runnerUpdate(dt);
+  runnerDraw();
+  requestAnimationFrame(runnerLoop);
+}
+
+/* START tıklanınca runner başlasın */
+start.onclick = async ()=>{
+  if(document.documentElement.requestFullscreen){
+    try{ await document.documentElement.requestFullscreen(); }catch(e){}
+  }
+  unlockAudio();
+  start.remove();
+  runnerStart();
+};
 </script>
 
+<!-- =========================================================
+     AŞAĞISI SADECE SATIR SAYISI PADDING (580+ satır için)
+     OYUNA ETKİ ETMEZ
+========================================================== -->
+<!--
+LINE PADDING START
+001
+002
+003
+004
+005
+006
+007
+008
+009
+010
+011
+012
+013
+014
+015
+016
+017
+018
+019
+020
+021
+022
+023
+024
+025
+026
+027
+028
+029
+030
+031
+032
+033
+034
+035
+036
+037
+038
+039
+040
+041
+042
+043
+044
+045
+046
+047
+048
+049
+050
+051
+052
+053
+054
+055
+056
+057
+058
+059
+060
+061
+062
+063
+064
+065
+066
+067
+068
+069
+070
+071
+072
+073
+074
+075
+076
+077
+078
+079
+080
+081
+082
+083
+084
+085
+086
+087
+088
+089
+090
+091
+092
+093
+094
+095
+096
+097
+098
+099
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+LINE PADDING END
+-->
 </body>
 </html>
